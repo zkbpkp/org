@@ -2632,7 +2632,7 @@ from the dynamic block definition."
     (insert-before-markers
      (or header
 	 ;; Format the standard header.
-	 (format "#+CAPTION: %s %s%s\n"
+	 (format "#+caption: %s %s%s\n"
 		 (org-clock--translate "Clock summary at" lang)
 		 (format-time-string (org-time-stamp-format t t))
 		 (if block
@@ -2945,6 +2945,7 @@ PROPERTIES: The list properties specified in the `:properties' parameter
 	 (link (plist-get params :link))
 	 (tags (plist-get params :tags))
 	 (match (plist-get params :match))
+         (predicate (plist-get params :predicate))
 	 (properties (plist-get params :properties))
 	 (inherit-property-p (plist-get params :inherit-props))
 	 (matcher (and match (cdr (org-make-tags-matcher match))))
@@ -2966,13 +2967,15 @@ PROPERTIES: The list properties specified in the `:properties' parameter
     (if te (setq te (org-matcher-time te)))
     (save-excursion
       (org-clock-sum ts te
-		     (when matcher
-		       (lambda ()
-			 (let* ((todo (org-get-todo-state))
-				(tags-list (org-get-tags))
-				(org-scanner-tags tags-list)
-				(org-trust-scanner-tags t))
-			   (funcall matcher todo tags-list nil)))))
+                     (if predicate
+                         (lambda () (funcall predicate))
+		       (when matcher
+		         (lambda ()
+			   (let* ((todo (org-get-todo-state))
+				  (tags-list (org-get-tags))
+				  (org-scanner-tags tags-list)
+				  (org-trust-scanner-tags t))
+			     (funcall matcher todo tags-list nil))))))
       (goto-char (point-min))
       (setq st t)
       (while (or (and (bobp) (prog1 st (setq st nil))
